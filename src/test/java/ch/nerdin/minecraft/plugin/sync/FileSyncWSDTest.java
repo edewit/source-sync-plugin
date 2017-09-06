@@ -10,18 +10,22 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -30,10 +34,11 @@ import static org.junit.Assert.assertEquals;
  */
 public class FileSyncWSDTest {
   private static NanoWSD server;
+  private File repoLocation = new File(".");
 
   @Before
   public void setUp() throws Exception {
-    server = new FileSyncWSD(9191, new File("."));
+    server = new FileSyncWSD(9191, repoLocation);
     server.start();
   }
 
@@ -50,27 +55,34 @@ public class FileSyncWSDTest {
     WebSocketClient client = new WebSocketClient();
     TestSocket socket = new TestSocket();
 
-    Git git = Git.open(new File("."));
-    git.diff().setOutputStream( System.out ).call();
-
-    socket.getToSendMessages().add("Hello");
-    socket.getToSendMessages().add("Thanks for the conversation.");
+    String patch = convertToString("/test.patch");
+    socket.getToSendMessages().add(patch);
 
     try {
       client.start();
       ClientUpgradeRequest request = new ClientUpgradeRequest();
       client.connect(socket, uri, request);
-      System.out.printf("Connecting to : %s%n", uri);
       socket.awaitClose(5, TimeUnit.SECONDS);
     } finally {
-      try {
-        client.stop();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      client.stop();
+      Git git = Git.open(repoLocation);
+      git.checkout().setForce(true).addPath(repoLocation.getPath()).call();
+      git.close();
     }
 
-    assertEquals("Hello", socket.getReceivedMessages().get(0));
+    assertEquals("applied", socket.getReceivedMessages().get(0));
+    try (InputStream is = Paths.get("src/test/resources/file.txt").toUri().toURL().openConnection().getInputStream()) {
+      assertEquals("This is a test file and has been changed.", convertToString(is));
+    }
+  }
+
+  private String convertToString(String resource) {
+    return convertToString(getClass().getResourceAsStream(resource));
+  }
+
+  private String convertToString(InputStream diffStream) {
+    return new BufferedReader(new InputStreamReader(diffStream))
+        .lines().collect(Collectors.joining("\n"));
   }
 
 

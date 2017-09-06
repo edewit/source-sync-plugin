@@ -9,7 +9,7 @@ import org.spongepowered.api.event.EventListener;
 import java.io.File;
 
 public class Activator implements BundleActivator {
-  private static NanoWSD server = new FileSyncWSD(7791, new File("."));
+  private NanoWSD server = new FileSyncWSD(7791, new File("."));
 
   @Override
   public void start(BundleContext context) throws Exception {
@@ -20,6 +20,7 @@ public class Activator implements BundleActivator {
 
   @Override
   public void stop(BundleContext context) throws Exception {
+    server.stop();
   }
 
 }

@@ -2,10 +2,9 @@ package ch.nerdin.minecraft.plugin.sync;
 
 import fi.iki.elonen.NanoWSD;
 import org.eclipse.jgit.api.ApplyCommand;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.patch.Patch;
+import org.eclipse.jgit.api.Git;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
@@ -13,37 +12,51 @@ import java.io.IOException;
  * Websocket server that receives file diffs and applies them to a folder, thus keeping files in sync.
  */
 class FileSyncWSD extends NanoWSD {
+  private final File folder;
+
   FileSyncWSD(int port, File folder) {
     super(port);
+    this.folder = folder;
   }
 
   @Override
   protected WebSocket openWebSocket(IHTTPSession handshake) {
-    return new SyncWebSocket(handshake);
+    return new SyncWebSocket(handshake, folder);
   }
 
   private static class SyncWebSocket extends WebSocket {
-    public SyncWebSocket(IHTTPSession handshake) {
+    private Git git;
+    private final File folder;
+    SyncWebSocket(IHTTPSession handshake, File folder) {
       super(handshake);
+      this.folder = folder;
     }
 
     @Override
     protected void onOpen() {
+      try {
+        git = Git.open(folder);
+      } catch (IOException e) {
+        throw new RuntimeException("could not sync with folder", e);
+      }
     }
 
     @Override
     protected void onClose(WebSocketFrame.CloseCode code, String reason, boolean initiatedByRemote) {
+      git.close();
     }
 
     @Override
     protected void onMessage(WebSocketFrame message) {
-      //Patch patch = message.getTextPayload();
-//      DiffEntry
-//      Patch patch = new Patch();
-//      patch.parse();
-//      Repository repo;
-//      ApplyCommand command = new ApplyCommand(repo);
-//      command.setPatch()
+      String diff = message.getTextPayload();
+      ApplyCommand apply = git.apply();
+      apply.setPatch(new ByteArrayInputStream(diff.getBytes()));
+      try {
+        apply.call();
+        send("applied");
+      } catch (Exception e) {
+        onException(new IOException(e));
+      }
     }
 
     @Override
@@ -53,7 +66,7 @@ class FileSyncWSD extends NanoWSD {
 
     @Override
     protected void onException(IOException exception) {
-      throw new RuntimeException(exception);
+      exception.printStackTrace();
     }
   }
 }
