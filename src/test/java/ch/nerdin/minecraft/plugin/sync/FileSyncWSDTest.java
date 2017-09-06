@@ -45,6 +45,9 @@ public class FileSyncWSDTest {
   @After
   public void tearDown() throws Exception {
     server.stop();
+    Git git = Git.open(repoLocation);
+    git.checkout().setForce(true).addPath(repoLocation.getPath()).call();
+    git.close();
   }
 
   @Test
@@ -65,9 +68,6 @@ public class FileSyncWSDTest {
       socket.awaitClose(5, TimeUnit.SECONDS);
     } finally {
       client.stop();
-      Git git = Git.open(repoLocation);
-      git.checkout().setForce(true).addPath(repoLocation.getPath()).call();
-      git.close();
     }
 
     assertEquals("applied", socket.getReceivedMessages().get(0));
