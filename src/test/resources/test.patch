@@ -1,0 +1,10 @@
+Index: src/test/resources/file.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/file.txt	(revision )
++++ src/test/resources/file.txt	(revision )
+@@ -1,0 +1,1 @@
++This is a test file.
+\ No newline at end of file

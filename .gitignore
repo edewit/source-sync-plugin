@@ -1,0 +1,14 @@
+.settings/
+.project
+.classpath
+.idea/
+*.iml
+
+bin/
+.apt_generated/
+xtend-gen/
+
+.gradle/
+build/
+.gradletasknamecache
+wrapper/

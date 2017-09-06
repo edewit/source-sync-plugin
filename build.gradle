@@ -1,0 +1,31 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:3.3.0'
+  }
+}
+
+repositories {
+  mavenLocal()
+  jcenter()
+  maven { url "http://repo.spongepowered.org/maven" }
+  maven { url './repo' }
+}
+
+apply plugin: 'java'
+apply plugin: 'biz.aQute.bnd.builder'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+  compile 'ch.vorburger.minecraft:ch.vorburger.minecraft.osgi.api:1.0.0-SNAPSHOT'
+  compile 'org.osgi:org.osgi.core:6.0.0'
+  compile 'org.nanohttpd:nanohttpd-websocket:2.3.1'
+  compile 'org.eclipse.jgit:org.eclipse.jgit:4.8.0.201706111038-r'
+
+  testCompile 'junit:junit:4.12'
+  testCompile 'org.eclipse.jetty.websocket:websocket-client:9.3.0.M2'
+}
