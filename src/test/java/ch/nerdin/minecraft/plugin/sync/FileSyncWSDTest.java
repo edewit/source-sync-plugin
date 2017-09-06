@@ -30,9 +30,10 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Created by edewit on 9/5/17.
+ * Test to see if the File Sync works.
  */
 public class FileSyncWSDTest {
+  public static final String TEST_FILE = "src/test/resources/file.txt";
   private static NanoWSD server;
   private File repoLocation = new File(".");
 
@@ -46,7 +47,7 @@ public class FileSyncWSDTest {
   public void tearDown() throws Exception {
     server.stop();
     Git git = Git.open(repoLocation);
-    git.checkout().setForce(true).addPath(repoLocation.getPath()).call();
+    git.checkout().setForce(true).addPath(TEST_FILE).call();
     git.close();
   }
 
@@ -58,6 +59,7 @@ public class FileSyncWSDTest {
     WebSocketClient client = new WebSocketClient();
     TestSocket socket = new TestSocket();
 
+    // when
     String patch = convertToString("/test.patch");
     socket.getToSendMessages().add(patch);
 
@@ -70,8 +72,9 @@ public class FileSyncWSDTest {
       client.stop();
     }
 
+    // then
     assertEquals("applied", socket.getReceivedMessages().get(0));
-    try (InputStream is = Paths.get("src/test/resources/file.txt").toUri().toURL().openConnection().getInputStream()) {
+    try (InputStream is = Paths.get(TEST_FILE).toUri().toURL().openConnection().getInputStream()) {
       assertEquals("This is a test file and has been changed.", convertToString(is));
     }
   }
