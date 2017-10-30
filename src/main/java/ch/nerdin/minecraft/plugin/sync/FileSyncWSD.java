@@ -2,7 +2,10 @@ package ch.nerdin.minecraft.plugin.sync;
 
 import fi.iki.elonen.NanoWSD;
 import org.eclipse.jgit.api.ApplyCommand;
+import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -48,13 +51,28 @@ class FileSyncWSD extends NanoWSD {
 
     @Override
     protected void onMessage(WebSocketFrame message) {
+      revertExistingChanges();
       String diff = message.getTextPayload();
       ApplyCommand apply = git.apply();
       apply.setPatch(new ByteArrayInputStream(diff.getBytes()));
       try {
         apply.call();
         send("applied");
+        close(WebSocketFrame.CloseCode.NormalClosure, "where done here", false);
       } catch (Exception e) {
+        onException(new IOException(e));
+      }
+    }
+
+    private void revertExistingChanges() {
+      try {
+        Status status = git.status().call();
+        CheckoutCommand checkoutCommand = git.checkout().setForce(true);
+        for (String modified : status.getModified()) {
+          checkoutCommand.addPath(modified);
+        }
+        checkoutCommand.call();
+      } catch (GitAPIException e) {
         onException(new IOException(e));
       }
     }
