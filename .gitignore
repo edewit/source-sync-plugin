@@ -5,6 +5,7 @@
 *.iml
 
 bin/
+out/
 .apt_generated/
 xtend-gen/
 
