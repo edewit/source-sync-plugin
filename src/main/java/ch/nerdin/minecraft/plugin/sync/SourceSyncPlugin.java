@@ -11,12 +11,12 @@ import org.spongepowered.api.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 
-@Plugin(id = "sync-plugin", name = "Source Sync Plugin",
+@Plugin(id = "source-sync-plugin", name = "Source Sync Plugin",
     description = "Make sure your current changes are running", version = "1.0")
 public class SourceSyncPlugin {
   @Inject
   private Logger logger;
-  private NanoWSD server = new FileSyncWSD(PORT, new File("dev/b3c364f6-25d8-4eb7-8c1e-b62225d40c0e/project1"));
+  private NanoWSD server = new FileSyncWSD(PORT, new File("src"));
 
   private static final int PORT = 7791;
 
