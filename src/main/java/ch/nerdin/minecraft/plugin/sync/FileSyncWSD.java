@@ -6,6 +6,7 @@ import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -67,7 +68,7 @@ class FileSyncWSD extends NanoWSD {
     private void revertExistingChanges() {
       try {
         Status status = git.status().call();
-        CheckoutCommand checkoutCommand = git.checkout().setForce(true);
+        CheckoutCommand checkoutCommand = git.checkout().setName(Constants.HEAD).setForce(true);
         for (String modified : status.getModified()) {
           checkoutCommand.addPath(modified);
         }
